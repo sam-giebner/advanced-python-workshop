@@ -1,6 +1,3 @@
-from curses import ACS_GEQUAL
-
-
 class Tree:
 
     def __init__(self,species,age,height,dbh,health,cut_down):
