@@ -1,5 +1,5 @@
 # Exercise 2: Classess
-## You have been asked to help manage the local school forest. Define a class that can be used to track the trees in the forest.
+## You have been asked to help manage the local school forest. Define a class in forest_manager.py that can be used to track the trees in the forest.
 ### Requirements:
 1. Attributes:
     - Species
