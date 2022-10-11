@@ -1,8 +1,21 @@
 # -*- coding: utf-8 -*-
 
+"""
+Author(s): Sam Giebner
+Date created: 10/10/2022
+Date last modified: 10/11/2022
+Python Version: 2 & 3
+Run time: Dynamic
+Description: Takes in a CSV of road data, 
+totals the mileage by road surface type,
+and outputs the totals as a CSV.
+"""
+
+# Import modules
 import csv
 import logging
 
+# Define classes and functions
 def main():
 
     # Define input csv file
