@@ -1,6 +1,8 @@
 # Exercise 1: Increasing Modularity and Readability. 
 
-## 1. Create a function that:
+## Modify address_parser.py so that it:
+
+### 1. Contains a function which:
   - Takes in a list of zip codes as a parameter.
   - Takes in an address as a string parameter.
   - Outputs:
@@ -13,8 +15,8 @@
       - Handle errors using try/except statements.
       - Use a main function to control logic.
  
-## 2.  Execute the function using named variables
+### 2.  Executes the function using named variables
 
-### Hints:
+#### Hints:
 - 'my_list' - contains zip codes found in Beltrami County.
 - 'test' - contains Paul Bunyan's address as a string.
