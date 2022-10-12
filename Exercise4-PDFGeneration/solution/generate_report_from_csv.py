@@ -13,8 +13,6 @@ Description:
 """
 
 # Import modules
-from email import header
-from pathlib import Path
 from fpdf import FPDF
 import logging
 from helpers import csv_tasks
@@ -24,9 +22,7 @@ class PDF(FPDF):
     def header(self):
         """configure page header"""
         # Rendering logo:
-        input_logo = (
-            Path(__file__).parent.absolute().joinpath("beltrami-county-logo.png")
-        )
+        input_logo = "paul-bunyan-logo.jpg"
         self.image(input_logo, 10, 8, 33)
         # Setting font: helvetica bold 15
         self.set_font("helvetica", "B", 15)
@@ -35,7 +31,7 @@ class PDF(FPDF):
         # Printing title:
         self.cell(30, 10, "Beltrami County Road Report", align="C")
         # Performing a line break:
-        self.ln(20)
+        self.ln(50)
 
     def footer(self):
         """configure page footer"""
@@ -62,7 +58,7 @@ class PDF(FPDF):
             h=10,
             txt=title,
             align="C",  # center align
-            border=True,  # nice for debugging
+            # border=True,  # nice for debugging
         )
 
         logging.info(f"{title} added to pdf")
@@ -76,28 +72,47 @@ class PDF(FPDF):
         self.output(path_to_output_pdf)
         logging.info(f"pdf exported to {path_to_output_pdf}")
 
-    def add_row_to_table(self, headers, row=None):
-        """Add row to table
-            If row data is provided use it,
-            otherwise add table headers
+    def add_label_text(self, label_text):
+        """insert label text into page
 
         Args:
-            row (dict, optional): row from spreadsheet. Defaults to None.
+            label_text (str): attribute label
         """
-        # check for row data
-        # if it's not there, this must be a header row
-        if not row:
-            for col in headers:
-                self.cell(w=40, h=7, txt=col, border=1, align="C")
-            self.ln()
-            logging.info(f"header row added: {headers}")
+        # add attribute label
+        self.cell(w=40, h=6, txt=label_text)
+        # add new line
+        self.ln()
 
-        # row data
-        else:
-            for col in headers:
-                self.cell(w=40, h=6, txt=row[col], border=1)
-            self.ln()
-            logging.info(f"row added: {row}")
+    def add_data_text(self, data_text):
+        """insert data text into page
+
+        Args:
+            data_text (str): attribute value to insert
+        """
+        # shift text over to offset from label
+        self.set_x(20)
+        # add data value based on attribute
+        self.cell(w=40, h=6, txt=data_text)
+        # add new line
+        self.ln(15)
+
+    def generate_road_page(self, attribute_mapping, row):
+        """generate page based on road data
+
+        Args:
+            attribute_mapping (dict): column name mappings
+            row (dict): row of road data from spreadsheet
+        """
+        # iterate over attribute mappings dictionary
+        for key, value in attribute_mapping.items():
+            # add label and data text to page
+            self.add_label_text(value)
+            self.add_data_text(row[key])
+
+        # add a new page
+        self.add_page()
+
+        logging.info("page added")
 
 
 def main():
@@ -106,14 +121,10 @@ def main():
     """
 
     # Define input csv file
-    input_csv_name = "BeltramiCountyRoads.csv"
-
-    # convert to full path
-    input_csv = Path(__file__).parent.absolute().joinpath(input_csv_name)
+    input_csv = "BeltramiCountyRoads_short.csv"
 
     # Define output pdf file
-    output_pdf_name = "BeltramiRoadReport.pdf"
-    output_pdf = Path(__file__).parent.absolute().joinpath(output_pdf_name)
+    output_pdf = "BeltramiRoadReport.pdf"
 
     # Define log file name as script name, replacing .py with .log
     log_file = __file__.replace(".py", ".log")
@@ -152,18 +163,23 @@ def main():
 
         logging.info("PDF started")
 
-        # add title to page
+        # add title page
         pdf.add_title("Beltrami Road Report, 2022")
+        # add a new page after title page
+        pdf.add_page()
 
-        # specify headers
-        table_headers = ["FULLNAME", "CTU", "JURS_DESC", "SURF_TYPE", "STATUS"]
-
-        # add headers
-        pdf.add_row_to_table(table_headers)
+        # map spreadsheet column names to comprehensible names
+        attribute_mapping = {
+            "FULLNAME": "Road Name",
+            "CTU": "Location",
+            "JURS_DESC": "Jurisdiction",
+            "SURF_TYPE": "Surface Type",
+            "STATUS": "Status",
+        }
 
         # add roads pages
         for row in road_data:
-            pdf.add_row_to_table(table_headers, row=row)
+            pdf.generate_road_page(attribute_mapping=attribute_mapping, row=row)
 
         # export pdf
         pdf.export(output_pdf)
