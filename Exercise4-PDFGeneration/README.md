@@ -1,6 +1,6 @@
 # Exercise 4: PDF Generation
 
-In this exercise you will automate the generation of a series of PDFs for a report.
+In this exercise you will automate the generation of a series of PDFs for a report. To do so you will extend an existing class by adding functionality to it to suit your specific needs.
 
 ## Task
 
