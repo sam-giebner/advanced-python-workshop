@@ -13,19 +13,21 @@ Description:
 """
 
 # Import modules
-from operator import add
-from sys import path_hooks
+from email import header
+from pathlib import Path
 from fpdf import FPDF
 import logging
 from helpers import csv_tasks
 
-# 
+#
 class PDF(FPDF):
     def header(self):
-        """ configure page header
-        """        
+        """configure page header"""
         # Rendering logo:
-        self.image("beltrami-county-logo".png", 10, 8, 33)
+        input_logo = (
+            Path(__file__).parent.absolute().joinpath("beltrami-county-logo.png")
+        )
+        self.image(input_logo, 10, 8, 33)
         # Setting font: helvetica bold 15
         self.set_font("helvetica", "B", 15)
         # Moving cursor to the right:
@@ -36,8 +38,7 @@ class PDF(FPDF):
         self.ln(20)
 
     def footer(self):
-        """ configure page footer
-        """    
+        """configure page footer"""
         # Position cursor at 1.5 cm from bottom:
         self.set_y(-15)
         # Setting font: helvetica italic 8
@@ -45,60 +46,58 @@ class PDF(FPDF):
         # Printing page number:
         self.cell(0, 10, f"Page {self.page_no()}/{{nb}}", align="C")
 
+    def add_title(self, title):
+        """Add title to report
 
-def start_pdf(self):
-    """Instansiate PDF object and do some basic configuration
+        Args:
+            title (str): text string to add to report
+        """
 
-    Returns:
-        pdf (pdf [obj]): pdf object from PDF class (extended from FPDF class)
-    """
-    pdf = PDF(
-        orientation="P",  # portrait layout
-        unit="mm",  # millimeters
-        format="Letter",
-    )
+        # move starting point to middle of the page
+        self.set_y(100)
 
-    # Add a page
-    pdf.add_page()
+        # add text to page
+        self.cell(
+            w=200,
+            h=10,
+            txt=title,
+            align="C",  # center align
+            border=True,  # nice for debugging
+        )
 
-    # Specify font
-    pdf.set_font(family="helvetica", size=16)
+        logging.info(f"{title} added to pdf")
 
-    logging.info("PDF started")
+    def export(self, path_to_output_pdf):
+        """Generate PDF
 
-    return pdf
+        Args:
+            path_to_output_pdf (str): path to save the output pdf file
+        """
+        self.output(path_to_output_pdf)
+        logging.info(f"pdf exported to {path_to_output_pdf}")
 
+    def add_row_to_table(self, headers, row=None):
+        """Add row to table
+            If row data is provided use it,
+            otherwise add table headers
 
-def add_title(self, title):
-    """Add title to report
+        Args:
+            row (dict, optional): row from spreadsheet. Defaults to None.
+        """
+        # check for row data
+        # if it's not there, this must be a header row
+        if not row:
+            for col in headers:
+                self.cell(w=40, h=7, txt=col, border=1, align="C")
+            self.ln()
+            logging.info(f"header row added: {headers}")
 
-    Args:
-        title (str): text string to add to report
-    """
-
-    # move starting point to middle of the page
-    self.set_y(100)
-
-    # add text to page
-    self.cell(
-        w=200,
-        h=10,
-        txt=title,
-        align="C",  # center align
-        border=True,  # nice for debugging
-    )
-
-    logging.info(f"{title} added to pdf")
-
-
-def export_pdf(self, path_to_output_pdf):
-    """Generate PDF
-
-    Args:
-        path_to_output_pdf (str): path to save the output pdf file
-    """
-    self.output(path_to_output_pdf)
-    logging.info(f"pdf exported to {path_to_output_pdf}")
+        # row data
+        else:
+            for col in headers:
+                self.cell(w=40, h=6, txt=row[col], border=1)
+            self.ln()
+            logging.info(f"row added: {row}")
 
 
 def main():
@@ -107,10 +106,14 @@ def main():
     """
 
     # Define input csv file
-    input_csv = "BeltramiCountyRoads.csv"
+    input_csv_name = "BeltramiCountyRoads.csv"
+
+    # convert to full path
+    input_csv = Path(__file__).parent.absolute().joinpath(input_csv_name)
 
     # Define output pdf file
-    output_pdf = "BeltramiRoadReport.pdf"
+    output_pdf_name = "BeltramiRoadReport.pdf"
+    output_pdf = Path(__file__).parent.absolute().joinpath(output_pdf_name)
 
     # Define log file name as script name, replacing .py with .log
     log_file = __file__.replace(".py", ".log")
@@ -134,24 +137,36 @@ def main():
         road_data = csv_tasks.csv_to_dict(input_csv)
         logging.info("Loaded features from CSV file.")
 
-        # start PDF
-        pdf = PDF()
-        
-        # add title to page
-        pdf.add_title('Beltrami Road Report, 2022')
-        
-        # add roads pages
-        
-
-
-        # Export data to csv
-        csv_tasks.dict_to_csv(
-            csv_path=output_csv,
-            headers_list=["Surface", "Miles"],
-            data_list=summary_data,
+        # create pdf object from PDF class
+        pdf = PDF(
+            orientation="P",  # portrait layout
+            unit="mm",  # millimeters
+            format="Letter",
         )
 
-        logging.info("Exported data to summary CSV.")
+        # Add a page
+        pdf.add_page()
+
+        # Specify font
+        pdf.set_font(family="helvetica", size=16)
+
+        logging.info("PDF started")
+
+        # add title to page
+        pdf.add_title("Beltrami Road Report, 2022")
+
+        # specify headers
+        table_headers = ["FULLNAME", "CTU", "JURS_DESC", "SURF_TYPE", "STATUS"]
+
+        # add headers
+        pdf.add_row_to_table(table_headers)
+
+        # add roads pages
+        for row in road_data:
+            pdf.add_row_to_table(table_headers, row=row)
+
+        # export pdf
+        pdf.export(output_pdf)
 
         # Record successful completion
         logging.info("Script successfully completed!")
