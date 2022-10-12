@@ -1,0 +1,1 @@
+# Try getting some dynamic content (such as a map) into a PDF using weasyprint
